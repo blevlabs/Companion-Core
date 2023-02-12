@@ -1,0 +1,16 @@
+{
+  "priority_files": [
+    {
+      "path": "/home/blabs/Companion-Core/dynamic-system/core/dirized_audio_server.py",
+      "priority": 1,
+      "name": "Audio Server",
+      "description": "Audio Server manages speaker dirization and live transcription services"
+    },
+    {
+      "path": "/home/blabs/Companion-Core/dynamic-system/core/ris.py",
+      "priority": 1,
+      "name": "RIS Server",
+      "description": "RIS Server manages the Robotic Interface"
+    }
+  ]
+}

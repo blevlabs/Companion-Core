@@ -1,0 +1,50 @@
+
+Starting LDC Test
+
+
+ {'face_data': {'Brayden Levangie': [20.82697296142578, 92.91022491455078, 111.57704162597656, 210.24380493164062]}, 'vit_data': None, 'audio_data': {'text': 'Speaker 0:  Wow.', 'timestamp': '19:51:16'} 'initial_classifier': 'NONE'}
+0.35205793380737305
+
+
+ {'face_data': {'Brayden Levangie': [68.5076675415039, 85.50341796875, 152.07875061035156, 205.60560607910156]}, 'vit_data': None, 'audio_data': {'text': 'Speaker 0:  Wow.', 'timestamp': '19:51:16'} 'initial_classifier': 'NONE'}
+0.12619686126708984
+
+
+ {'face_data': {'Brayden Levangie': [69.76731872558594, 87.34844970703125, 174.15057373046875, 217.29754638671875]}, 'vit_data': None, 'audio_data': {'text': 'Speaker 0:  Wow.', 'timestamp': '19:51:16'} 'initial_classifier': 'NONE'}
+0.12989544868469238
+
+
+ {'face_data': {'Brayden Levangie': [66.15962982177734, 91.90985870361328, 163.13150024414062, 211.4267120361328]}, 'vit_data': None, 'audio_data': {'text': 'Speaker 0:  Want to hear a funny story?', 'timestamp': '19:51:22'} 'initial_classifier': 'NONE'}
+0.12633275985717773
+
+
+ {'face_data': {'Brayden Levangie': [72.17487335205078, 91.46512603759766, 166.5288543701172, 207.77842712402344]}, 'vit_data': None, 'audio_data': {'text': 'Speaker 0:  Want to hear a funny story?', 'timestamp': '19:51:22'} 'initial_classifier': 'NONE'}
+0.12012553215026855
+
+
+ {'face_data': {'Brayden Levangie': [69.09192657470703, 87.2386703491211, 164.0517120361328, 206.69479370117188]}, 'vit_data': None, 'audio_data': {'text': "Speaker 0:  I'm okay", 'timestamp': '19:51:26'} 'initial_classifier': 'NO-RESPONSE'}
+0.16407442092895508
+
+
+ {'face_data': {'Brayden Levangie': [68.69767761230469, 79.97747802734375, 159.66075134277344, 193.2122039794922]}, 'vit_data': None, 'audio_data': {'text': "Speaker 0:  I'm okay", 'timestamp': '19:51:26'} 'initial_classifier': 'NO-RESPONSE'}
+0.16167902946472168
+
+
+ {'face_data': {'Brayden Levangie': [74.65799713134766, 80.45939636230469, 171.47695922851562, 196.95013427734375]}, 'vit_data': None, 'audio_data': {'text': "Speaker 0:  I'm okay", 'timestamp': '19:51:26'} 'initial_classifier': 'NO-RESPONSE'}
+0.18417787551879883
+
+
+ {'face_data': {'Brayden Levangie': [69.51800537109375, 85.6207504272461, 165.17599487304688, 204.93597412109375]}, 'vit_data': None, 'audio_data': {'text': "Speaker 0:  You're looking a bit odd.", 'timestamp': '19:51:31'} 'initial_classifier': 'NONE'}
+0.1248464584350586
+
+
+ {'face_data': {'Brayden Levangie': [68.4131088256836, 82.99003601074219, 166.26992797851562, 211.6936492919922]}, 'vit_data': None, 'audio_data': {'text': "Speaker 0:  You're looking a bit odd.", 'timestamp': '19:51:31'} 'initial_classifier': 'NONE'}
+0.1269230842590332
+
+
+ {'face_data': {'Brayden Levangie': [70.86416625976562, 82.35596466064453, 162.5145263671875, 197.61077880859375]}, 'vit_data': None, 'audio_data': {'text': "Speaker 0:  You're looking a bit odd.", 'timestamp': '19:51:31'} 'initial_classifier': 'NONE'}
+0.12596535682678223
+
+
+ {'face_data': {'Brayden Levangie': [70.15025329589844, 79.22116088867188, 170.07321166992188, 206.75563049316406]}, 'vit_data': None, 'audio_data': {'text': ["SPEAKER 1 0:00:00: Hey, you're kind of lacking out. "], 'timestamp': '19:51:39'} 'initial_classifier': 'NONE'}
+0.12465286254882812
