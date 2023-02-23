@@ -73,10 +73,10 @@ servo3 = servo.Servo(pwm3)
 pwm4 = pwmio.PWMOut(board.GP27, duty_cycle=2 ** 15, frequency=50)  # base
 servo4 = servo.Servo(pwm4)
 
-s1_base_angle = 70  # head
-s2_base_angle = 10
-s3_base_angle = 180
-s4_base_angle = 0  # base
+s1_base_angle = 75  # head
+s2_base_angle = 60
+s3_base_angle = 90
+s4_base_angle = 90  # base
 
 
 def record_mics():
@@ -114,36 +114,37 @@ angle = 2
 def tracker_calc(x_mid, y_mid, resolution, **kwargs):
     width, height = resolution[0], resolution[1]
     xpos, ypos = servo4.angle, servo1.angle
-    while not x_mid - 10 < xpos < x_mid + 10:
-        if x_mid > width / 2 + 30:
-            xpos += angle
-        if x_mid < width / 2 - 30:
-            xpos -= angle
-        if y_mid < height / 2 + 30:
-            ypos -= angle
-        if y_mid > height / 2 - 30:
-            ypos += angle
-        if xpos >= 180:
-            xpos = 180
-        elif xpos <= 0:
-            xpos = 0
-        if ypos >= 180:
-            ypos = 180
-        elif ypos <= 0:
-            ypos = 0
-        set_servos(s1_base_angle=xpos, s2_base_angle=32, s3_base_angle=180, s4_base_angle=ypos)
+    print("Init",xpos,ypos)
+    if x_mid > width / 2 + 30:
+        xpos += angle
+    if x_mid < width / 2 - 30:
+        xpos -= angle
+    if y_mid < height / 2 + 30:
+        ypos -= angle
+    if y_mid > height / 2 - 30:
+        ypos += angle
+    if xpos >= 180:
+        xpos = 180
+    elif xpos <= 0:
+        xpos = 0
+    if ypos >= 180:
+        ypos = 180
+    elif ypos <= 0:
+        ypos = 0
+    set_servos(s1_base_angle=ypos, s2_base_angle=60, s3_base_angle=90, s4_base_angle=xpos)
 
-
+set_servos(s1_base_angle, s2_base_angle, s3_base_angle, s4_base_angle)
 while True:
     data = serial_read()
     location_key = record_mics()
     if data is not None:
+        print(data)
         if data["format"] == "servos":
-            set_servos(**data)
             s1_base_angle = data["s1_base_angle"]
             s2_base_angle = data["s2_base_angle"]
             s3_base_angle = data["s3_base_angle"]
             s4_base_angle = data["s4_base_angle"]  # base
+            set_servos(s1_base_angle, s2_base_angle, s3_base_angle, s4_base_angle)
         elif data["format"] == "axis":
             tracker_calc(data["X"], data["Y"], data["resolution"])
-    set_servos(s1_base_angle, s2_base_angle, s3_base_angle, s4_base_angle)
+

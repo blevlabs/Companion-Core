@@ -9,12 +9,13 @@ window.title("Slider Application")
 
 # Create a dictionary to store the slider values
 ris_server = "http://127.0.0.1:5075"
-slider_values = {"s1_base_angle": 90, "s2_base_angle": 10, "s3_base_angle": 180, "s4_base_angle": 90, "format": "servos"}
+slider_values = {"s1_base_angle": 75, "s2_base_angle": 60, "s3_base_angle": 90, "s4_base_angle": 90, "format": "servos"}
 
 
 # Create a function to update the dictionary with the new slider values
 def update_slider_values(slider_id, new_value):
     slider_values[slider_id] = new_value
+    print(slider_values)
     requests.post(ris_server + "/ris", json=slider_values)
 
 

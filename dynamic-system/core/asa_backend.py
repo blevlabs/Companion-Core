@@ -1,8 +1,10 @@
-import weaviate
-import openai
 import uuid
+import traceback
+import openai
+import requests
+import weaviate
+
 from resources.database_manager import DatabaseManager
-from transformers import AutoTokenizer, AutoModelWithLMHead, pipeline
 
 database_manager = DatabaseManager()
 
@@ -15,34 +17,48 @@ class ASA:
         """
         self.weaviate_client = weaviate.Client(weaviate_server)
         self.modeltype = modeltype
-        if self.modeltype == "codeT5":
-            # "Salesforce/codet5-large-ntp-py"
-            self.codeT5_model = pipeline("text2text-generation", model="Salesforce/codet5-large-ntp-py",
-                                         tokenizer="Salesforce/codet5-large-ntp-py", framework="pt", device=0)
+        self.codet5_server = "http://192.168.1.110:5090/codet5"
+
+    def init_params(self, **kwargs):
+        self.base_call = {"file": None, "context": None, "code": None, "repair_mode": None, "asa_class_type": None}
+        # update base call with kwargs
+        self.base_call.update(self.asa_type)
+        self.file = self.base_call["file"]
+        self.context = self.base_call["context"]
+        self.code = self.base_call["code"]
+        self.repair_mode = self.base_call["repair_mode"]
+        self.asa_class_type = self.base_call["asa_class_type"]
+        return self.base_call
 
     def call_asa(self, asa_type):
         self.asa_type = asa_type
+        self.init_params()
         self.response = getattr(self, self.asa_type["asa_class_type"])(**asa_type)
         if "file" in self.asa_type and "repair_mode" in self.asa_type:
             print("Repairing file", self.asa_type["file"], "with repair mode", self.asa_type["repair_mode"])
             self.file = self.asa_type["file"]
             self.file_writer(self.file, self.asa_type["code"], self.response)
 
+    def call_codet5(self, code):
+        return requests.post(self.codet5_server, json={"code": code}).json()["codet5-response"][0][
+            "generated_text"].replace("\n\n", "\n").strip("\n")
+
     def merge(self, orginal_code, completion):
         strA = orginal_code
         strB = completion
-        print(strA, strB)
+        print("Merging Code...")
+        # print(strA, strB)
         merge_code = strA[:strA.index(strB[0])] + strB
         return merge_code
 
-    def weaviate_writer(self, prompt, context, label, output):
+    def weaviate_writer(self, prompt, context, label, output, **kwargs):
         if type(context) != type([]):
             context = [context]
         self.weaviate_client.data_object.create(
             data_object={"prompt": prompt, "context": context, "label": label, "output": output}, class_name="ASA",
             uuid=str(uuid.uuid4()))
 
-    def file_writer(self, file, original_code, new_code):
+    def file_writer(self, file, original_code, new_code, **kwargs):
         with open(file, "r") as f:
             filedata = f.read()
             filedata = filedata.replace(original_code, new_code)
@@ -74,7 +90,8 @@ class ASA:
                     "Errored Code Line": response[4].replace("Errored Code Line: ", ""),
                     "function": response[5].replace("Function: ", ""), "error": response[6].replace("Error: ", ""),
                     "repair_mode": True}
-        self.file = response["file"]
+        if self.file is None:
+            self.file = response["file"]
         return response
 
     def call_codex(self, context, code, **kwargs):
@@ -96,18 +113,13 @@ class ASA:
             context="Error Context:" + context + "\nErrored Code:\n" + code, label="optimization", output=code)
         return code
 
-    def extract_context_window(self, error_line):
+    def extract_context_window(self, error_line, **kwargs):
         file_data = open(self.file, "r").read()
         error_line = int(error_line)
         # replace literal newlines with a placeholder
         # extract code window with edgecases (check if it is the first or last line)
-        if error_line == 1:
-            context_window = file_data.split("\n")[error_line - 1:error_line + 4]
-        elif error_line == len(file_data.split("\n")):
-            context_window = file_data.split("\n")[error_line - 5:error_line]
-        else:
-            context_window = file_data.split("\n")[error_line - 4:error_line + 4]
-        context_window = "\n".join(context_window)
+        context_window_data = file_data.split("\n")
+        context_window = "\n".join(context_window_data[max(0, error_line - 5):min(len(context_window_data), error_line + 5)])
         return context_window
 
     def analysis(self, code, **kwargs):
@@ -156,3 +168,26 @@ class ASA:
         if code != "":
             gen_code = self.merge(code, gen_code)
         return gen_code
+
+    def repair(self, file, **kwargs):
+        # run file, get tracebacks, send to error breakdown, send to generation, rewrite file
+        self.file = file
+        # The below loop will continue to run and repair the file until it is error free
+        errorCheck = True
+        while errorCheck is True:
+            try:
+                exec(open(file).read())
+                errorCheck = False
+            except Exception as e:
+                errorCheck = True
+                # get tracebacks
+                tracebacks = traceback.format_exc()
+                # send to error breakdown
+                breakdown = self.breakdown(tracebacks)
+                breakdown["code"] = self.extract_context_window(breakdown["line"])
+                print(self.extract_context_window(breakdown["line"]))
+                # send to generation
+                gen_code = self.generation(context=breakdown["Errored Code Line"], code=breakdown["code"])
+                # rewrite file
+                self.file_writer(file, breakdown["code"], gen_code)
+        return "File repaired"

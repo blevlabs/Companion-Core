@@ -1,19 +1,18 @@
 # This script is part of the Dynamic System project. This script manages the execution, status monitoring,
 # and logging of any errors that occur during the execution of any files in the Dynamic System project. Import the
 # necessary modules.
-import sys
 import datetime
-import subprocess
-import threading
-import traceback
 import json
-import weaviate
 import os
-from asa import ASA
-import traceback
+import subprocess
+import sys
+import threading
+
 # asa_type FORMAT: {"asa_class_type": "generation|optimization|analysis|breakdown","context":"OPTIONAL","code":"OPTIONAL",file:"OPTIONAL",repair_mode:"OPTIONAL"}
 import time
-import os
+import traceback
+import requests
+import weaviate
 
 '''
 Action Log Schema
@@ -37,13 +36,15 @@ class LAE:
                  log_json_path="/home/blabs/Companion-Core/dynamic-system/core/logs/action_log.json",
                  priority_log="/home/blabs/Companion-Core/dynamic-system/core/logs/priority_log.json",
                  error_log_path="/home/blabs/Companion-Core/dynamic-system/core/logs/error_log.json",
-                 weaviate_server="http://192.168.1.110:8080"):
+                 weaviate_server="http://192.168.1.110:8080",
+                 asa_server="http://localhost:5090/asa"):
         self.script_paths = None
         self.priority = None
         self.weaviate_client = weaviate.Client(weaviate_server)
         self.python_path = sys.executable
         self.running = False
         self.processes = []
+        self.asa_server = asa_server
         self.error_log_path = error_log_path
         self.threads = []
         self.log_json_path = log_json_path
@@ -54,6 +55,7 @@ class LAE:
         # Get the priority of the script
         with open(self.priority_log, "r") as priority_log_file:
             priority_log = json.loads(priority_log_file.read())["priority_files"]
+        print("Priority: ", priority_log)
         return priority_log
 
     def live_checks(self):
@@ -80,6 +82,15 @@ class LAE:
             log_file.write(json.dumps(log) + "\n")
         return True
 
+    def request_asa(self, asa_info):
+        # Request the ASA
+        # Send the request to the ASA
+        try:
+            response = requests.post(self.asa_server, json=asa_info)
+            return response.json()["asa-response"]
+        except Exception as error:
+            return {"error": "ASA server is not live: " + str(error)}
+
     def run_script(self, script_path):
         # Run the script
         try:
@@ -92,29 +103,34 @@ class LAE:
 
     def monitor_threads(self, fix=False):
         # Monitor the threads
-        while self.running:
-            # Check if any threads or subprocesses have stopped running or if any traceback errors have occurred
-            for thread in self.threads:
-                if not thread["thread"].is_alive():
-                    stdout, stderr = thread["process"].communicate()
-                    error = stderr.decode("utf-8")
-                    print("THREAD ERROR: ", error)
-                    self.log_error(thread["script_path"], error, error)
-                    if fix:
-                        asa_breakdown = {"asa_class_type": "breakdown", "context": error}
-                        breakdown_asa = ASA(asa_breakdown).response
-                        repair_data = {"asa_class_type": "generation"}
-                        repair_data.update(breakdown_asa)
-                        ASA(repair_data)
-                        # Restart the thread
-                        thread["thread"] = threading.Thread(target=self.run_script, args=(thread["script_path"],))
-                        thread["thread"].start()
-                        # thread["process"] = subprocess.Popen([self.python_path, thread["script_path"]],
-                        #                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    print("PROCESS ERROR: ", error)
-                    # kill specific python file
-                    os.system("pkill -f " + thread["script_path"])
-            time.sleep(0.1)
+        try:
+            while self.running:
+                # Check if any threads or subprocesses have stopped running or if any traceback errors have occurred
+                for thread in self.threads:
+                    if not thread["thread"].is_alive():
+                        stdout, stderr = thread["thread"].communicate()
+                        error = stderr.decode("utf-8")
+                        print("THREAD ERROR: ", error)
+                        self.log_error(thread["script_path"], error, error)
+                        if fix:
+                            asa_breakdown = {"asa_class_type": "breakdown", "context": error}
+                            breakdown_asa = self.request_asa(asa_breakdown)
+                            repair_data = {"asa_class_type": "generation"}
+                            repair_data.update(breakdown_asa)
+                            self.request_asa(repair_data)
+                            # Restart the thread
+                            thread["thread"] = threading.Thread(target=self.run_script, args=(thread["script_path"],))
+                            thread["thread"].start()
+                            # thread["process"] = subprocess.Popen([self.python_path, thread["script_path"]],
+                            #                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        print("PROCESS ERROR: ", error)
+                        # kill specific python file
+                        os.system("pkill -f " + thread["script_path"])
+                time.sleep(0.1)
+        except KeyboardInterrupt:
+            print("Shutting Down LAE...")
+            self.running = False
+            os.system("pkill python")
 
     def initalize(self):
         # Start the multithreading process
@@ -123,11 +139,11 @@ class LAE:
         print("All scripts: ", self.script_paths)
         for script_path in self.script_paths:
             print("Working on script: ", script_path)
-            # Create a new thread and subprocess
+            # Create a new multiprocess
             thread = threading.Thread(target=self.run_script, args=(script_path,))
             # process = subprocess.Popen([self.python_path, script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # Add the thread and subprocess to the threads list
-            self.threads.append({"thread": thread, "process": "process", "script_path": script_path})
+            self.threads.append({"thread": thread, "process": None, "script_path": script_path})
             # Start the thread
             thread.start()
             print("Started thread for script: ", script_path)

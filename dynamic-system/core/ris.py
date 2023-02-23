@@ -8,7 +8,23 @@ class RIS:
     def __init__(self, port="/dev/ttyACM0", baudrate=115200):
         self.port = port
         self.baudrate = baudrate
-        self.ser = serial.Serial(self.port, self.baudrate)
+        try:
+            self.ser = serial.Serial(self.port, self.baudrate)
+        except:
+            print("Could not connect to RIS - trying a different port")
+            ports = ["/dev/ttyACM0", "/dev/ttyACM1"]
+            failcount = 0
+            for port in ports:
+                try:
+                    self.ser = serial.Serial(port, self.baudrate)
+                    print("Connected to RIS on port %s" % port)
+                    return
+                except:
+                    failcount += 1
+                    print("Could not connect to RIS on port %s" % port)
+            if failcount == len(ports):
+                raise Exception("Could not connect to RIS")
+
 
     def send(self, data):
         assert type(data) == dict, "Data must be a dictionary"
@@ -23,6 +39,11 @@ class RIS:
 ris = RIS()
 # server will take in any commands and send it to the RIS
 app = Flask(__name__)
+
+
+@app.route("/health", methods=['POST'])
+def health():
+    return jsonify({"status": "OK"})
 
 
 @app.route("/ris", methods=['POST'])

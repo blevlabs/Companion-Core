@@ -24,11 +24,14 @@ def on_submit():
     name = name_entry.get()
     observer_data = {"names": [name]}
     response = aci_instance.prompt_generation(message, observer_data)
+    print(response["timestamps"])
     chat_log.configure(state='normal')
     chat_log.insert(tk.END, name + ": " + message + "\n")
     chat_log.insert(tk.END, "Companion Core: " + response["companionResponse"] + "\n")
     chat_log.configure(state='disabled')
     user_input.delete(0, tk.END)
+    aci_instance.generate_speech(response["companionResponse"])
+    aci_instance.run_speech()
 
 
 root = tk.Tk()

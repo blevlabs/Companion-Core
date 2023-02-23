@@ -33,7 +33,7 @@ def get_face_data():
 def send_tracking_data(data):
     X, Y = data["closest_face"]["X"], data["closest_face"]["Y"]
     ris_config = {"X": X, "Y": Y, "format": "axis", "resolution": [1920, 1080]}
-    ris_server = "http://127.0.0.1:5060"
+    ris_server = "http://127.0.0.1:5075"
     try:
         requests.post(ris_server + "/ris", json=ris_config)
     except Exception as e:

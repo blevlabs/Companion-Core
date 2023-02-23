@@ -5,6 +5,7 @@ import os
 from resources.database_manager import DatabaseManager
 import httpx
 import time
+from resources.audio_manager import textGen, speak_to_user
 
 openai.api_key = os.getenv("OPENAI_PERSONAL")
 database_manager = DatabaseManager()
@@ -12,6 +13,7 @@ from resources.INFO import info
 import asyncio
 import json
 import uuid
+
 info = info()
 
 
@@ -46,18 +48,20 @@ class ACI:
         self.memory_manager = MemoryManager()
 
     def prompt_generation(self, speaker_data, observer_data, context={}):
+        timestamps = {}
+        t0 = time.time()
         # format date like MM DD, YYYY at HH:MM AM/PM
         names = ", ".join(observer_data["names"])
         date = datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p")
         self.conversation_duration = str(((datetime.datetime.now() - self.start_time).seconds / 60).__round__(2))
+        t1 = time.time()
+        timestamps["format_prompt_date_names"] = t1 - t0
+        t0 = time.time()
         base_prompt = f"Welcome to the Companion Core, a robotic assistant created by Brayden Levangie. The Companion Core " \
                       f"is equipped with the ability to browse the internet and understand its surroundings, and always " \
                       f"strives to provide accurate and truthful information. If you provide context for a conversation, " \
                       f"the Companion Core will use it to better understand and respond to your questions or recall " \
-                      f"previously discussed information. If the conversation does not require a response from the " \
-                      f"Companion Core, such as when two users are speaking with each other or when the conversation " \
-                      f"consists solely of questions and answers, the Companion Core will simply acknowledge this with a " \
-                      f"\"NO-RESPONSE\" message. The current date is {date}, and the present observable speakers are " \
+                      f"previously discussed information. The current date is {date}, and the present observable speakers are " \
                       f"{names}. This conversation has been going on for {self.conversation_duration} minutes."
         appended_prompts = []
         if len(self.memory_history) != 0:
@@ -69,6 +73,9 @@ class ACI:
         while (len("\n===\n".join(appended_prompts)) // 4) > 2048:
             appended_prompts.pop(0)
         conversation = base_prompt + "".join(appended_prompts) + "\n===\n"
+        t1 = time.time()
+        timestamps["format_prompt_memory"] = t1 - t0
+        t0 = time.time()
         if context != {}:
             for key, value in context.items():
                 conversation += f"{key}: {value}\n"
@@ -77,14 +84,22 @@ class ACI:
         else:
             user_response = speaker_data
         conversation += f"{user_response}\n===\n" + "Companion Core:"
+        t1 = time.time()
+        timestamps["format_prompt_context"] = t1 - t0
+        t0 = time.time()
         conversation_response, cost = self.gpt3_aci_gen(conversation)
+        t1 = time.time()
+        timestamps["gpt3_aci_gen"] = t1 - t0
+        t0 = time.time()
         memory_packet = self.memory_manager.format_memory(user_response, conversation_response, names)
         self.memory_history.append(memory_packet)
         self.memory_manager.save_memory(self.memory_history)
+        t1 = time.time()
+        timestamps["format_save_memory"] = t1 - t0
         convo_datapacket = {
             "conversation_time": str(((datetime.datetime.now() - self.start_time).seconds / 60).__round__(2)),
             "speakerData": speaker_data, "companionResponse": conversation_response, "observers": observer_data,
-            "conversation_length": self.conversation_duration, "context": context}
+            "conversation_length": self.conversation_duration, "context": context, "timestamps": timestamps}
         database_manager.class_data_uploader("ACI", convo_datapacket)
         return convo_datapacket
 
@@ -95,8 +110,8 @@ class ACI:
             temperature=0.7,
             max_tokens=256,
             top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0,
+            frequency_penalty=0.08,
+            presence_penalty=0.08,
             stop=["==="]
         )["choices"][0]["text"].strip()
         cost = (((len(prompt) + len(response)) // 4) / 1000) * 0.02
@@ -116,11 +131,17 @@ class ACI:
         output = self.generate(promptSchema)[0]["generated_text"]
         uuidkey = uuid.uuid4()
         database_manager.class_data_uploader("classifyLog", {"uuid": uuidkey, "userInput": classifier_context,
-                                                            "classifyType": output})
+                                                             "classifyType": output})
         return output
 
     def gather_info(self, text):
         return info.research(text)
+
+    def generate_speech(self, text):
+        textGen(dialogue=text)
+
+    def run_speech(self):
+        speak_to_user()
 
     async def multithread_server_updates(self, servers, server_updates):
         client = httpx.AsyncClient(timeout=20)

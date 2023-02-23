@@ -11,6 +11,18 @@
       "priority": 1,
       "name": "RIS Server",
       "description": "RIS Server manages the Robotic Interface"
+    },
+    {
+      "path": "/home/blabs/Companion-Core/dynamic-system/core/visual_server.py",
+      "priority": 1,
+      "name": "VIS Server",
+      "description": "VIS Server manages the Visual Interface"
+    },
+    {
+      "path": "/home/blabs/Companion-Core/dynamic-system/core/asa.py",
+      "priority": 1,
+      "name": "ASA Server",
+      "description": "ASA Server manages the automated self-advancement system"
     }
   ]
 }

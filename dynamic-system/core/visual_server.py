@@ -138,7 +138,13 @@ with contextlib.ExitStack() as stack:
         in_rgb = queues["rgb"].get()  # blocking call, will wait until a new data has arrived
         frame = in_rgb.getCvFrame()
         frame = cv2.flip(frame, 0)
+        print(frame.shape)
         return frame
+
+
+    @app.route("/health", methods=['POST'])
+    def health():
+        return jsonify({"status": "OK"})
 
 
     @app.route('/live', methods=['POST'])

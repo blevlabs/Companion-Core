@@ -1,4 +1,6 @@
 import requests
+import weaviate
+
 from aci import ACI
 
 # from asa import ASA
@@ -11,7 +13,13 @@ class dynamic:
     def __init__(self):
         self.audio_server = "http://127.0.0.1:5000"
         self.video_server = "http://127.0.0.1:5050"
-        self.ris = "http://127.0.0.1:5060"
+        self.ris = "http://127.0.0.1:5075"
+        self.asa = "http://127.0.0.1:5090"
+        self.carp = "http://192.168.1.110:5000/ccarp"
+        self.codet5 = "http://192.168.1.110:5090/codet5"
+        self.weaviate_database = "http://192.168.1.110:8080"
+        # health_results = self.health()
+        # print("Health results: ", health_results)
 
     def get_face_data(self):
         # example: {'Brayden Levangie': [x1, y1, x2, y2]}
@@ -32,6 +40,42 @@ class dynamic:
         center_y = (y1 + y2) / 2
         face_data["closest_face"] = {"X": center_x, "Y": center_y, "name": closest_face_name}
         return face_data
+
+    def call_carp(self, query="Test", documents=["Test"]):
+        try:
+            carp_data = requests.post(self.carp, json={"query": query, "documents": documents}, timeout=10).json()
+        except Exception as e:
+            raise e
+        return carp_data
+
+    def call_codet5(self, query="#make a script that adds two numbers"):
+        try:
+            code = \
+                requests.post(self.codet5, json={"code": query}, timeout=10)
+            print(code.text)
+            code = code.json()[
+                "codet5-response"][0][
+                "generated_text"].replace("\n\n", "\n").strip("\n")
+        except Exception as e:
+            raise e
+        return code
+
+    def health(self):
+        endpoints = [[self.audio_server, "Audio Server"], [self.video_server, "Video Server"], [self.ris, "RIS Server"],
+                     [self.asa, "ASA Server"]]
+        results = {}
+        for endpoint in endpoints:
+            try:
+                results[endpoint[1]] = requests.post(endpoint[0] + "/health").json()
+            except Exception as e:
+                results[endpoint[1]] = {"error": str(e)}
+        for service in [[self.call_carp, "CARP"], [self.call_codet5, "codeT5"]]:
+            try:
+                results[service[1]] = service[0]()
+            except Exception as e:
+                results[service[1]] = {"error": str(e)}
+        results["weaviate_database"] = weaviate.Client(self.weaviate_database).is_live()
+        return results
 
     def vit_request(self, objects):
         try:

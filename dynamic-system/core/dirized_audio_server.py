@@ -18,6 +18,7 @@ from pyannote.core import Segment
 import wave
 import contextlib
 from ctypes import *
+
 ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
 from sklearn.cluster import AgglomerativeClustering
 import numpy as np
@@ -27,8 +28,7 @@ app = Flask(__name__)
 
 # Create a recognizer object
 # init parameters
-num_speakers = 1  # @param {type:"integer"}
-# print(mic.list_working_microphones())
+num_speakers = 2  # @param {type:"integer"}
 language = 'English'  # @param ['any', 'English']
 
 model_size = 'medium'  # @param ['tiny', 'base', 'small', 'medium', 'large']
@@ -43,15 +43,18 @@ def time(secs):
 # Define a function that continuously listens to the microphone and updates the latest speech recognition results
 def listen_for_speech():
     r = sr.Recognizer()
-    mic = sr.Microphone(7)
-    mic.sample_rate = 16000
+    available_microphones = sr.Microphone.list_working_microphones()
+    # switch the key/value pairs
+    available_microphones = {v: k for k, v in available_microphones.items()}
+    # print(available_microphones)
+    # print("Connecting to microphone...",available_microphones["USB PnP Audio Device: Audio (hw:2,0)"])
     while True:
         # Listen for speech from the microphone
         print("Listening...")
-        with mic as source:
-            r.adjust_for_ambient_noise(source, duration=0.3)
+        with sr.Microphone() as source:
+            r.adjust_for_ambient_noise(source, duration=0.5)
             audio = r.listen(source)
-        data = audio.get_wav_data()
+            data = audio.get_wav_data()
         # write to file
         with open(speaker_path, "wb") as f:
             f.write(data)
@@ -69,7 +72,7 @@ def listen_for_speech():
             if len(segments) <= 1:
                 # current time in datetime formatted
                 curtime = datetime.datetime.now().strftime("%H:%M:%S")
-                app.latest_speech = {"text": "Speaker 0: "+text["text"], "timestamp": curtime}
+                app.latest_speech = {"text": "Speaker 0: " + text["text"], "timestamp": curtime}
                 print(app.latest_speech)
                 # Add the speech recognition results to the buffer
                 app.speech_buffer.append(app.latest_speech)
@@ -103,10 +106,9 @@ def listen_for_speech():
             for i in range(len(segments)):
                 segments[i]["speaker"] = 'SPEAKER ' + str(labels[i] + 1)
             for (i, segment) in enumerate(segments):
-                if i == 0 or segments[i - 1]["speaker"] != segment["speaker"]:
-                    speech_data = "\n" + segment["speaker"] + ' ' + str(time(segment["start"])) + ": " + segment["text"][1:] + ' '
-                    speech_data = speech_data.strip("\n")
-                    current_speak_data.append(speech_data)
+                speech_data = "\n" + segment["speaker"] + ' ' + str(time(segment["start"])) + ": " + segment["text"][1:] + ' '
+                speech_data = speech_data.strip("\n")
+                current_speak_data.append(speech_data)
             # Update the latest speech recognition results
             curtime = datetime.datetime.now().strftime("%H:%M:%S")
             app.latest_speech = {"text": current_speak_data, "timestamp": curtime}
@@ -123,6 +125,11 @@ def listen_for_speech():
         except sr.RequestError as e:
             print(f"Error: {e}")
             app.latest_speech = {"error": e}
+
+
+@app.route("/health", methods=['POST'])
+def health():
+    return jsonify({"status": "OK"})
 
 
 # Define a route that accepts incoming requests and returns the latest speech recognition results
@@ -149,6 +156,6 @@ if __name__ == "__main__":
 
     # Start the listening thread
     threading.Thread(target=listen_for_speech).start()
-
     # Start the Flask app
     app.run(port=5000)
+    # check if thread is alive
