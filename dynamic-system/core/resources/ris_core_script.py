@@ -114,7 +114,7 @@ angle = 2
 def tracker_calc(x_mid, y_mid, resolution, **kwargs):
     width, height = resolution[0], resolution[1]
     xpos, ypos = servo4.angle, servo1.angle
-    print("Init",xpos,ypos)
+    print("Init", xpos, ypos)
     if x_mid > width / 2 + 30:
         xpos += angle
     if x_mid < width / 2 - 30:
@@ -133,6 +133,7 @@ def tracker_calc(x_mid, y_mid, resolution, **kwargs):
         ypos = 0
     set_servos(s1_base_angle=ypos, s2_base_angle=60, s3_base_angle=90, s4_base_angle=xpos)
 
+
 set_servos(s1_base_angle, s2_base_angle, s3_base_angle, s4_base_angle)
 while True:
     data = serial_read()
@@ -147,4 +148,3 @@ while True:
             set_servos(s1_base_angle, s2_base_angle, s3_base_angle, s4_base_angle)
         elif data["format"] == "axis":
             tracker_calc(data["X"], data["Y"], data["resolution"])
-

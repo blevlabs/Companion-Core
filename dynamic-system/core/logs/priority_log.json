@@ -23,6 +23,12 @@
       "priority": 1,
       "name": "ASA Server",
       "description": "ASA Server manages the automated self-advancement system"
+    },
+    {
+      "path": "/home/blabs/Companion-Core/dynamic-system/core/aci_server.py",
+      "priority": 1,
+      "name": "ACI Server",
+      "description": "ACI Server manages the advanced conversation interface"
     }
   ]
 }

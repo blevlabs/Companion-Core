@@ -8,7 +8,65 @@ from aci import ACI
 aci = ACI()
 
 
-class dynamic:
+class interpreter:
+
+    def __init__(self):
+        pass
+
+    def info_search_breakdown(self, live_data):
+        # Requires: User Dialogue, Face Recognition Data, Audio History Data
+        # Returns: Search Data for Contextual Usage
+        # Functions: Search Query Generation (FlanT5)
+        dialog = live_data["audio_data"]["text"]
+        # generate search query
+
+        pass
+
+    def info_memory_breakdown(self, live_data):
+        # Requires: User Dialogue, Face Recognition Data, Audio History Data
+        # Returns: Memory Data for Contextual Usage
+        # Functions: Memory Query Generation (FlanT5), Memory Query Execution (Weaviate Search)
+        dialog = live_data["audio_data"]["text"]
+        users = live_data["face_data"]
+
+        pass
+
+    def chat_response_breakdown(self, live_data):
+        # Requires: User Dialogue, Face Recognition Data, Audio History Data
+        # Returns: Chat Response Data for ACI and Secondary Action Classifier
+        # Functions: ACI Generation
+        dialog = live_data["audio_data"]["text"]
+        users = live_data["face_data"]
+        # generate ACI
+        conversation_packet = aci.prompt_generation(dialog, users)
+        return conversation_packet
+
+    def internal_fix_breakdown(self, live_data):
+        # Requires: User Dialogue, Face Recognition Data, Audio History Data
+        # Returns: Internal Fix Data: Traceback Review - CALL LAE
+        # Functions: ASA Call on Traceback
+        dialog = live_data["audio_data"]["text"]
+        # parse issue and send to LAE System
+        # classes: Reset, Check Scripts, Shutdown, Reboot, Add Functionality, Update Functionality
+
+        pass
+
+    def classifier_manager(self, class_name, ldc_details):
+        related_class_functions = {"INFO-SEARCH": self.info_search_breakdown, "INFO-MEMORY": self.info_memory_breakdown,
+                                   "CHAT-RESP": self.chat_response_breakdown,
+                                   "INTERNAL-FIX": self.internal_fix_breakdown}
+        if class_name in related_class_functions and class_name != "NONE":
+            exec_content = related_class_functions[class_name](ldc_details)
+        elif class_name == "NONE":
+            return {"status": "NONE"}
+        else:
+            return {"status": "ERROR"}
+        act_log = {
+            "status": {"class_name": class_name, "ldc_details": ldc_details, "exec_content": exec_content}}
+        return act_log
+
+
+class dynamic(interpreter):
 
     def __init__(self):
         self.audio_server = "http://127.0.0.1:5000"
@@ -18,7 +76,9 @@ class dynamic:
         self.carp = "http://192.168.1.110:5000/ccarp"
         self.codet5 = "http://192.168.1.110:5090/codet5"
         self.weaviate_database = "http://192.168.1.110:8080"
-        # health_results = self.health()
+        health_results = self.health()
+        if "error" in health_results:
+            raise Exception("Health results: ", health_results)
         # print("Health results: ", health_results)
 
     def get_face_data(self):
@@ -119,58 +179,6 @@ class dynamic:
         initial_classifier = self.classify_dialogue(audio_data["text"])
         live_data["initial_classifier"] = initial_classifier
         return live_data
-
-    def info_search_breakdown(self, live_data):
-        # Requires: User Dialogue, Face Recognition Data, Audio History Data
-        # Returns: Search Data for Contextual Usage
-        # Functions: Search Query Generation (FlanT5)
-        dialog = live_data["audio_data"]["text"]
-        # generate search query
-
-        pass
-
-    def info_memory_breakdown(self, live_data):
-        # Requires: User Dialogue, Face Recognition Data, Audio History Data
-        # Returns: Memory Data for Contextual Usage
-        # Functions: Memory Query Generation (FlanT5), Memory Query Execution (Weaviate Search)
-        dialog = live_data["audio_data"]["text"]
-        users = live_data["face_data"]
-
-        pass
-
-    def chat_response_breakdown(self, live_data):
-        # Requires: User Dialogue, Face Recognition Data, Audio History Data
-        # Returns: Chat Response Data for ACI and Secondary Action Classifier
-        # Functions: ACI Generation
-        dialog = live_data["audio_data"]["text"]
-        users = live_data["face_data"]
-        # generate ACI
-        conversation_packet = aci.prompt_generation(dialog, users)
-        return conversation_packet
-
-    def internal_fix_breakdown(self, live_data):
-        # Requires: User Dialogue, Face Recognition Data, Audio History Data
-        # Returns: Internal Fix Data: Traceback Review - CALL LAE
-        # Functions: ASA Call on Traceback
-        dialog = live_data["audio_data"]["text"]
-        # parse issue and send to LAE System
-        # classes: Reset, Check Scripts, Shutdown, Reboot, Add Functionality, Update Functionality
-
-        pass
-
-    def classifier_manager(self, class_name, ldc_details):
-        related_class_functions = {"INFO-SEARCH": self.info_search_breakdown, "INFO-MEMORY": self.info_memory_breakdown,
-                                   "CHAT-RESP": self.chat_response_breakdown,
-                                   "INTERNAL-FIX": self.internal_fix_breakdown}
-        if class_name in related_class_functions and class_name != "NONE":
-            exec_content = related_class_functions[class_name](ldc_details)
-        elif class_name == "NONE":
-            return {"status": "NONE"}
-        else:
-            return {"status": "ERROR"}
-        act_log = {
-            "status": {"class_name": class_name, "ldc_details": ldc_details, "exec_content": exec_content}}
-        return act_log
 
     def execution_server_manager(self, act_log):
         # Requires: Action Log
