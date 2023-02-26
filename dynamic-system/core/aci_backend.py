@@ -48,7 +48,7 @@ class ACI(MemoryManager):
         self.memory_history = []
         self.start_time = datetime.datetime.now()
 
-    def prompt_generation(self, speaker_data, observer_data, context={} ):
+    def prompt_generation(self, speaker_data, observer_data, context={}):
         timestamps = {}
         t0 = time.time()
         # format date like MM DD, YYYY at HH:MM AM/PM
@@ -102,6 +102,7 @@ class ACI(MemoryManager):
             "speakerData": speaker_data, "companionResponse": conversation_response, "observers": observer_data,
             "conversation_length": self.conversation_duration, "context": context, "timestamps": timestamps}
         database_manager.class_data_uploader("ACI", convo_datapacket)
+        self.generate_speech(convo_datapacket["companionResponse"])
         return convo_datapacket
 
     def gpt3_aci_gen(self, prompt):

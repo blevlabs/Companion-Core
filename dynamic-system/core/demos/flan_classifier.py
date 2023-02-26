@@ -2,10 +2,8 @@ import sys
 import tkinter as tk
 
 sys.path.insert(0, '/home/blabs/Companion-Core/dynamic-system/core')
-from aci import ACI
-
-aci = ACI()
-
+from dynamic_library import dynamic
+dyn = dynamic()
 # Create the main window
 window = tk.Tk()
 window.title("Input Classifier")
@@ -29,7 +27,7 @@ def classify():
     text = text_box.get("1.0", "end-1c")
     print("Processing: " + text)
     text = "Speaker 1: " + text
-    result = aci.flan_classify(text)
+    result = dyn.classify_dialogue(text)
     # Create a label to display the result
     result_label = tk.Label(frame, text=result, font=("Helvetica", 14))
     result_label.pack()
