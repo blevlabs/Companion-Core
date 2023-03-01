@@ -1,31 +1,31 @@
 {
   "priority_files": [
     {
-      "path": "/home/blabs/Companion-Core/dynamic-system/core/dirized_audio_server.py",
+      "path": "/home/blabs/Companion-Core/dynamic-system/core/audio/dirized_audio_server.py",
       "priority": 1,
       "name": "Audio Server",
       "description": "Audio Server manages speaker dirization and live transcription services"
     },
     {
-      "path": "/home/blabs/Companion-Core/dynamic-system/core/ris.py",
+      "path": "/home/blabs/Companion-Core/dynamic-system/core/robotic-interface/ris.py",
       "priority": 1,
       "name": "RIS Server",
       "description": "RIS Server manages the Robotic Interface"
     },
     {
-      "path": "/home/blabs/Companion-Core/dynamic-system/core/visual_server.py",
+      "path": "/home/blabs/Companion-Core/dynamic-system/core/visual/visual_server.py",
       "priority": 1,
       "name": "VIS Server",
       "description": "VIS Server manages the Visual Interface"
     },
     {
-      "path": "/home/blabs/Companion-Core/dynamic-system/core/asa.py",
+      "path": "/home/blabs/Companion-Core/dynamic-system/core/automated-self-advancement/asa.py",
       "priority": 1,
       "name": "ASA Server",
       "description": "ASA Server manages the automated self-advancement system"
     },
     {
-      "path": "/home/blabs/Companion-Core/dynamic-system/core/aci_server.py",
+      "path": "/home/blabs/Companion-Core/dynamic-system/core/advanced-chat-interface/aci_server.py",
       "priority": 1,
       "name": "ACI Server",
       "description": "ACI Server manages the advanced conversation interface"

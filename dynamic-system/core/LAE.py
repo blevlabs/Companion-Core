@@ -46,7 +46,6 @@ class LAE:
         self.processes = []
         self.asa_server = asa_server
         self.error_log_path = error_log_path
-        self.threads = []
         self.log_json_path = log_json_path
         self.priority_log = priority_log
         self.live_checks()
@@ -106,9 +105,9 @@ class LAE:
         try:
             while self.running:
                 # Check if any threads or subprocesses have stopped running or if any traceback errors have occurred
-                for thread in self.threads:
-                    if not thread["thread"].is_alive():
-                        stdout, stderr = thread["thread"].communicate()
+                for thread in self.processes:
+                    if thread["process"].poll() is not None:
+                        stdout, stderr = thread["process"].communicate()
                         error = stderr.decode("utf-8")
                         print("THREAD ERROR: ", error)
                         self.log_error(thread["script_path"], error, error)
@@ -140,12 +139,10 @@ class LAE:
         for script_path in self.script_paths:
             print("Working on script: ", script_path)
             # Create a new multiprocess
-            thread = threading.Thread(target=self.run_script, args=(script_path,))
-            # process = subprocess.Popen([self.python_path, script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen([self.python_path, script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # Add the thread and subprocess to the threads list
-            self.threads.append({"thread": thread, "process": None, "script_path": script_path})
+            self.processes.append({"process": process, "script_path": script_path})
             # Start the thread
-            thread.start()
             print("Started thread for script: ", script_path)
 
 
