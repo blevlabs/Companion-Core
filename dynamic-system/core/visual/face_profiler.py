@@ -1,7 +1,6 @@
 # print current working dir
 import os
 
-print(os.getcwd())
 
 from face_database import *
 from profiling import *
@@ -9,7 +8,7 @@ import string
 import random
 
 
-def recognize(imgfp=None, databasefp="/home/blabs/Companion-Core/dynamic-system/core/databases/face_profiles.pkl",
+def recognize(imgfp=None, databasefp="face_profiles.pkl",
               extractKnown=False, camera=False, array=False):
     if array:
         img = imgfp

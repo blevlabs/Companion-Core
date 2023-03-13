@@ -132,7 +132,7 @@ with contextlib.ExitStack() as stack:
 
 
     def get_rgb_frame():
-        for i in range(30):
+        for i in range(7):
             in_rgb = queues["rgb"].get()
             frame = in_rgb.getCvFrame()
         in_rgb = queues["rgb"].get()  # blocking call, will wait until a new data has arrived

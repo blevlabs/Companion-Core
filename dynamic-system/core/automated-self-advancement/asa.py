@@ -14,11 +14,11 @@ def health():
 @app.route("/asa", methods=["POST"])
 def asa():
     user_request = request.get_json()
-    print(user_request)
     asa_instance.call_asa(user_request)
     if asa_instance.response is None:
         return None
     return jsonify({"asa-response": asa_instance.response})
+
 
 
 if __name__ == "__main__":
